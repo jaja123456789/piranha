@@ -30,11 +30,11 @@ fn main() {
     .expect("Could not install pre-commit (pip dependency)");
 
   // Add pre-commit hook
-  _ = Command::new("sh")
-    .arg("-c")
-    .arg("pre-commit install")
-    .spawn()
-    .expect("Install pre-commit hook");
+  //_ = Command::new("sh")
+  //  .arg("-c")
+  //  .arg("pre-commit install")
+  //  .spawn()
+  //  .expect("Install pre-commit hook");
 
   // Install taplo-cli
   _ = Command::new("cargo")

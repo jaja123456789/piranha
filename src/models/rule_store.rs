@@ -152,6 +152,10 @@ impl RuleStore {
         panic!("Path to codebase does not exist: {}", p2codebase);
       }
       let _paths_to_codebase = Path::new(p2codebase).to_path_buf();
+	  debug!(
+		  "{}",
+		  format!("Found {}", _paths_to_codebase.display())
+		);
       // If the path to codebase is a file, and the language can parse it, then add it to the files
       if _paths_to_codebase.is_file() && self.language().can_parse(&_paths_to_codebase) {
         candidate_files.insert(
@@ -162,10 +166,14 @@ impl RuleStore {
       }
       candidate_files.extend(self.get_candidate_files_from_dir(p2codebase, include, exclude));
     }
+	
+	debug!(
+      "{}",
+      format!("{} files will be filtered.", candidate_files.len()).green()
+    );
 
     // Filter the files based on the global rules with holes
     let final_file_set = self.filter_files_based_on_global_rule_holes(candidate_files);
-
     debug!(
       "{}",
       format!("{} files will be analyzed.", final_file_set.len()).green()

@@ -21,7 +21,7 @@ use crate::utilities::parse_toml;
 
 use super::{
   default_configs::{
-    default_language, GO, JAVA, JAVA_CS, KOTLIN, PYTHON, SCALA, STRINGS, SWIFT, THRIFT, TSX,
+    default_language, C_SHARP, GO, JAVA, JAVA_CS, KOTLIN, PYTHON, SCALA, STRINGS, SWIFT, THRIFT, TSX,
     TS_SCHEME, TYPESCRIPT,
   },
   outgoing_edges::Edges,
@@ -68,6 +68,7 @@ pub enum SupportedLanguage {
   Strings,
   TsScheme,
   Scala,
+  CSharp
 }
 
 impl PiranhaLanguage {
@@ -270,6 +271,15 @@ impl std::str::FromStr for PiranhaLanguage {
         scopes: parse_toml::<ScopeConfig>(include_str!("../cleanup_rules/scala/scope_config.toml"))
           .scopes()
           .to_vec(),
+        comment_nodes: vec![],
+	  }),
+	  C_SHARP => Ok(PiranhaLanguage {
+        extension: "cs".to_string(),
+        supported_language: SupportedLanguage::CSharp,
+        language: tree_sitter_c_sharp::language(),
+        rules: None,
+        edges: None,
+        scopes: vec![],
         comment_nodes: vec![],
       }),
       _ => Err("Language not supported"),

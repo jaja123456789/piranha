@@ -5,6 +5,36 @@ from logging import info
 
 feature_flag_dir = join(dirname(__file__), "feature_flag_cleanup")
 
+def run_csharp_ff_demo():
+    info("Running the stale feature flag cleanup demo for c sharp")
+
+    directory_path = join(feature_flag_dir, "csharp")
+    modified_file_path = join(directory_path, "SampleClass.cs")
+    configuration_path = join(directory_path, "configurations")
+
+    old_mtime = getmtime(modified_file_path)
+
+    args = PiranhaArguments(
+        "c_sharp",
+        substitutions={
+            "stale_flag_name": "SAMPLE_STALE_FLAG",
+            "treated": "true",
+            "treated_complement": "false",
+        },
+        paths_to_codebase=[directory_path+'/SampleClass.cs'],
+        path_to_configurations=configuration_path,
+    )
+    output_summary_java = execute_piranha(args)
+
+    assert len(output_summary_java) == 2
+
+    for summary in output_summary_java:
+        assert len(summary.rewrites) > 0
+
+    new_mtime = getmtime(modified_file_path)
+
+    assert old_mtime < new_mtime
+    assert not exists(deleted_join_path)
 
 def run_java_ff_demo():
     info("Running the stale feature flag cleanup demo for Java")
@@ -77,6 +107,7 @@ FORMAT = "%(levelname)s %(name)s %(asctime)-15s %(filename)s:%(lineno)d %(messag
 logging.basicConfig(format=FORMAT)
 logging.getLogger().setLevel(logging.DEBUG)
 
-run_java_ff_demo()
-run_kt_ff_demo()
+#run_java_ff_demo()
+#run_kt_ff_demo()
+run_csharp_ff_demo()
 print("Completed running the stale feature flag cleanup demos")
