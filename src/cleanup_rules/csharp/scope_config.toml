@@ -49,10 +49,10 @@ enclosing_node = """
 (
   [(method_declaration 
             name : (_) @n
-            parameters : (formal_parameters)@fp)
+            parameters : (parameter_list)@fp)
    (constructor_declaration 
             name: (_) @n
-            parameters : (formal_parameters)@fp)
+            parameters : (parameter_list)@fp)
             
   ]          
             @xdn)"""
@@ -60,13 +60,13 @@ scope = """
 (
   [(((method_declaration 
             name : (_) @z
-            parameters : (formal_parameters)@tp))
+            parameters : (parameter_list)@tp))
     (#eq? @z "@n")
     (#eq? @tp "@fp")                  
     )
    (((constructor_declaration 
             name: (_) @z
-            parameters : (formal_parameters)@tp))
+            parameters : (parameter_list)@tp))
     (#eq? @tp "@fp")
     (#eq? @z "@n")
     )

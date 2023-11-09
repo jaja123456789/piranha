@@ -17,12 +17,13 @@ def run_csharp_ff_demo():
     args = PiranhaArguments(
         "c_sharp",
         substitutions={
-            "stale_flag_name": "SAMPLE_STALE_FLAG",
+            "stale_flag_name": "JIRA45_Enabled",
             "treated": "true",
             "treated_complement": "false",
         },
         paths_to_codebase=[directory_path+'/SampleClass.cs'],
         path_to_configurations=configuration_path,
+        number_of_ancestors_in_parent_scope=5
     )
     output_summary_java = execute_piranha(args)
 
@@ -55,6 +56,7 @@ def run_java_ff_demo():
         },
         paths_to_codebase=[directory_path],
         path_to_configurations=configuration_path,
+        
     )
     output_summary_java = execute_piranha(args)
 

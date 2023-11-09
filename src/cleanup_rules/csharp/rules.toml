@@ -18,7 +18,7 @@
 
 [[rules]]
 name = "simplify_parenthesized_expression"
-query = "(parenthesized_expression ([(true) (false) (identifier)] @expression)) @p_expr"
+query = "(parenthesized_expression ([(boolean_literal) (identifier)] @expression)) @p_expr"
 replace = "@expression"
 replace_node = "p_expr"
 is_seed_rule = false
@@ -40,8 +40,8 @@ name = "simplify_if_statement_true"
 query = """
 (
     (if_statement
-        condition : (condition (true))
-        consequence : ((statement) @consequence))
+        condition : ((boolean_literal) @bool) (#match? @bool "true")
+        consequence : ((block) @consequence))
 @if_statement)
 """
 replace = "@consequence"
@@ -49,12 +49,12 @@ replace_node = "if_statement"
 is_seed_rule = false
 
 # Before : 
-#  if (true) { doSomething(); } else { doSomethingElse();}
+#  if (false) { doSomething(); } else { doSomethingElse();}
 # After :
 #  { doSomethingElse(); } 
 #
 # Before : 
-#  if (true) { doSomething(); }
+#  if (false) { doSomething(); }
 # After :
 #  
 [[rules]]
@@ -63,8 +63,8 @@ name = "simplify_if_statement_false"
 query = """
 (
     (if_statement
-        condition : (condition (false))
-        consequence : ((statement) @consequence)
+        condition : ((boolean_literal) @bool) (#match? @bool "false")
+        consequence : ((block) @consequence)
         alternative : ((_) @alternative) ?)
 @if_statement)"""
 replace = "@alternative"
@@ -81,13 +81,13 @@ groups = ["boolean_expression_simplify"]
 name = "simplify_not_false"
 query = """
 (
-    (unary_expression
-        operator: "!"
-        operand: (false))
-@unary_expression)
+    (prefix_unary_expression
+    	((boolean_literal) @bool) (#eq? @bool "false")
+    )
+@prefix_unary_expression (#match? @prefix_unary_expression "!"))
 """
 replace = "true"
-replace_node = "unary_expression"
+replace_node = "prefix_unary_expression"
 is_seed_rule = false
 
 # Before : 
@@ -100,13 +100,13 @@ groups = ["boolean_expression_simplify"]
 name = "simplify_not_true"
 query = """
 (
-    (unary_expression
-        operator: \"!\"
-        operand: (true))
-@unary_expression)
+    (prefix_unary_expression
+    	((boolean_literal) @bool) (#eq? @bool "true")
+    )
+@prefix_unary_expression (#match? @prefix_unary_expression "!")) 
 """
 replace = "false"
-replace_node = "unary_expression"
+replace_node = "prefix_unary_expression"
 is_seed_rule = false
 
 # Before : 
@@ -135,13 +135,6 @@ query = """
             (_)* @post
         )
     )
-    (constructor_body
-        (
-            (_)* @pre
-            (block (_)* @nested.statements) @nested.block
-            (_)* @post
-        )
-    )
     ]@block)"""
 replace = "@nested.statements"
 replace_node = "nested.block"
@@ -159,7 +152,7 @@ name = "simplify_true_and_something"
 query = """
 (
     (binary_expression
-        left: (true)
+        left: (boolean_literal) @bool (#eq? @bool "true")
         operator:"&&"
         right : (_) @rhs) 
 ) @binary_expression
@@ -181,7 +174,7 @@ query = """
     (binary_expression
         left : (_) @lhs
         operator:"&&"
-        right: (true)
+        right: ((boolean_literal) @bool) (#eq? @bool "true")
     )
 @binary_expression)"""
 replace = "@lhs"
@@ -199,7 +192,7 @@ name = "simplify_false_and_something"
 query = """
 (
     (binary_expression
-        left: (false)
+        left: ((boolean_literal) @bool) (#eq? @bool "false")
         operator : "&&"
         right : (_) @rhs
     )
@@ -221,8 +214,9 @@ query = """
     (binary_expression
         left : (_) @lhs
         operator : "&&"
-        right: (false)) @binary_expression
-)
+        right: ((boolean_literal) @bool) (#eq? @bool "false")
+	) 
+@binary_expression)
 """
 replace = "false"
 replace_node = "binary_expression"
@@ -241,7 +235,7 @@ query = """
     (binary_expression
         left : (_) @lhs
         operator:"||"
-        right: (true)
+        right: ((boolean_literal) @bool) (#eq? @bool "true")
     )
 @binary_expression)"""
 replace = "true"
@@ -259,7 +253,7 @@ name = "simplify_true_or_something"
 query = """
 (
     (binary_expression
-        left : (true)
+        left : ((boolean_literal) @bool) (#eq? @bool "true")
         operator:"||"
         right: (_) @rhs
     )
@@ -282,7 +276,7 @@ query = """(
     binary_expression
         left : (_) @lhs
         operator:"||"
-        right: (false)
+        right: ((boolean_literal) @bool) (#eq? @bool "false")
     )
 @binary_expression)"""
 replace = "@lhs"
@@ -300,7 +294,7 @@ name = "simplify_false_or_something"
 query = """
 (
     (binary_expression
-        left : (false)
+        left : ((boolean_literal) @bool) (#eq? @bool "false")
         operator:"||"
         right: (_) @rhs
     )
@@ -350,9 +344,9 @@ name = "simplify_equals_equals_false"
 query = """
 (
     (binary_expression
-        left : [(false) @lhs (true) @lhs (string_literal) (decimal_integer_literal) @lhs (decimal_floating_point_literal) @lhs]
+        left : [(boolean_literal) @lhs (string_literal) @lhs (integer_literal) @lhs (real_literal) @lhs]
         operator:"=="
-        right: [(false) @rhs (true) @rhs (string_literal) @rhs (decimal_integer_literal) @rhs (decimal_floating_point_literal) @rhs]
+        right: [(boolean_literal) @rhs (string_literal) @rhs (integer_literal) @rhs (real_literal) @rhs]
     )
 @binary_expression
 (#not-eq? @lhs @rhs)
@@ -375,9 +369,9 @@ name = "simplify_not_equals_false"
 query = """
 (
     (binary_expression
-        left : [(false) @lhs (true) @lhs (string_literal) (decimal_integer_literal) @lhs (decimal_floating_point_literal) @lhs]
+        left : [(boolean_literal) @lhs (string_literal) @lhs (integer_literal) @lhs (real_literal) @lhs]
         operator:"!="
-        right: [(false) @rhs (true) @rhs (string_literal) @rhs (decimal_integer_literal) @rhs (decimal_floating_point_literal) @rhs]
+        right: [(boolean_literal) @rhs (string_literal) @rhs (integer_literal) @rhs (real_literal) @rhs]
     )
 @binary_expression
 (#eq? @lhs @rhs)
@@ -400,9 +394,9 @@ name = "simplify_not_equals_true"
 query = """
 (
     (binary_expression
-        left : [(false) @lhs (true) @lhs (string_literal) (decimal_integer_literal) @lhs (decimal_floating_point_literal) @lhs]
+        left : [(boolean_literal) @lhs (string_literal) @lhs (integer_literal) @lhs (real_literal) @lhs]
         operator:"!="
-        right: [(false) @rhs (true) @rhs (string_literal) @rhs (decimal_integer_literal) @rhs (decimal_floating_point_literal) @rhs]
+        right: [(boolean_literal) @rhs (string_literal) @rhs (integer_literal) @rhs (real_literal) @rhs]
     )
 @binary_expression
 (#not-eq? @lhs @rhs)
@@ -426,10 +420,14 @@ is_seed_rule = false
 #
 [[rules]]
 name = "delete_all_statements_after_return"
-query = """(
-        (block  ((statement)* @pre)
-         ((return_statement) @r)
-         ((statement)+ @post)) @b)"""
+query = """
+(
+	(block  ((_statement)* @pre)
+      ((return_statement) @r)
+      ((_)+ @post)
+    ) @b
+)
+"""
 replace = ""
 replace_node = "post"
 is_seed_rule = false
@@ -445,7 +443,7 @@ groups = ["if_cleanup"]
 name = "simplify_ternary_similar_consequent_alternative"
 query = """
 (
-    (ternary_expression condition: (_)
+    (conditional_expression condition: (_)
         consequence: (_)* @consequence
         alternative: (_)* @alternative)
 @ternary_expression
@@ -465,7 +463,7 @@ groups = ["if_cleanup"]
 name = "simplify_ternary_operator_true"
 query = """
 (
-    (ternary_expression condition: (true)
+    (conditional_expression condition: (boolean_literal) @bool (#eq? @bool "true")
         consequence: (_)* @consequence
         alternative: (_)* @alternative)
 @ternary_expression)"""
@@ -483,7 +481,7 @@ groups = ["if_cleanup"]
 name = "simplify_ternary_operator_false"
 query = """
 (
-    (ternary_expression condition: (false)
+    (conditional_expression condition: (boolean_literal) @bool (#eq? @bool "false")
         consequence: (_)* @consequence
         alternative: (_)* @alternative)
 @ternary_expression)"""
@@ -491,40 +489,40 @@ replace = "@alternative"
 replace_node = "ternary_expression"
 is_seed_rule = false
 
-[[rules]]
-name = "delete_empty_enum_declaration"
-query = """
-(enum_declaration) @enum_declaration"""
-replace = ""
-replace_node = "enum_declaration"
-is_seed_rule = false
-[[rules.filters]]
-enclosing_node = "(enum_declaration) @ed"
-not_contains = ["(enum_constant) @ec"]
+#[[rules]]
+#name = "delete_empty_enum_declaration"
+#query = """
+#(enum_declaration) @enum_declaration"""
+#replace = ""
+#replace_node = "enum_declaration"
+#is_seed_rule = false
+#[[rules.filters]]
+#enclosing_node = "(enum_declaration) @ed"
+#not_contains = ["(enum_constant) @ec"]
 
 
 # This rule deltes all the content of the file if it contains 
 # no type declaration, enum declaration and annotation type declaration. 
 #
 # It optionally captures the @package_name for the deleted file. 
-[[rules]]
-name = "delete_file_with_no_type_declarations"
-query = """(
-(program 
-  (package_declaration (_) @package_name)?) @program)"""
-replace = ""
-replace_node = "program"
-is_seed_rule = false
-[[rules.filters]]
-enclosing_node = "(program) @c_program"
-not_contains = [
-  "(enum_declaration) @c_enum_declaration",
-  "(class_declaration) @c_class_declaration",
-  "(interface_declaration) @c_interface_declaration",
-  "(annotation_type_declaration) @c_annotation_type_declaration",
-  "(module_declaration) @c_module_declaration",
-  "(record_declaration) @c_arecord_declaration",
-]
+#[[rules]]
+#name = "delete_file_with_no_type_declarations"
+#query = """(
+#(program 
+#  (package_declaration (_) @package_name)?) @program)"""
+#replace = ""
+#replace_node = "program"
+#is_seed_rule = false
+#[[rules.filters]]
+#enclosing_node = "(program) @c_program"
+#not_contains = [
+#  "(enum_declaration) @c_enum_declaration",
+#  "(class_declaration) @c_class_declaration",
+#  "(interface_declaration) @c_interface_declaration",
+#  "(annotation_type_declaration) @c_annotation_type_declaration",
+#  "(module_declaration) @c_module_declaration",
+#  "(record_declaration) @c_arecord_declaration",
+#]
 
 # This rule is part (and entry point) for the inline local variable cleanup. Example: 
 # 
@@ -554,12 +552,12 @@ not_contains = [
 [[rules]]
 name = "delete_variable_declaration"
 query = """
-(
-((local_variable_declaration 
-                declarator: (variable_declarator 
-                                    name: (_) @variable_name
-                                    value: [(true) (false)] @init)) @variable_declaration)
-)
+(local_declaration_statement (variable_declaration
+	(variable_declarator
+    	(identifier) @variable_name
+        (equals_value_clause (boolean_literal) @init)
+    ) 
+) @variable_declaration)
 """
 replace = ""
 replace_node = "variable_declaration"
@@ -582,31 +580,31 @@ not_contains = ["""
 
 # This rule is part (and entry point) of the inline field declaration cleanup.
 # Same as the rule `delete_variable_declaration`, but applicable to fields.
-[[rules]]
-name = "delete_field_declaration"
-query = """
-(
-((field_declaration 
-                declarator: (variable_declarator 
-                                    name: (_) @variable_name
-                                    value: [(true) (false)] @init)) @field_declaration)
-)
-"""
-replace = ""
-replace_node = "field_declaration"
-is_seed_rule = false
-
-# Check if there is no assignment where the variable @variable_name is 
-# assigned to a value other than @init, within the method body
-[[rules.filters]]
-enclosing_node = "(class_declaration) @cd"
-not_contains = ["""(
-((assignment_expression
-                    left: (_) @a.lhs
-                    right: (_) @a.rhs) @assignment)
-(#eq? @a.lhs "@variable_name")
-(#not-eq? @a.rhs "@init")
-)"""]
+#[[rules]]
+#name = "delete_field_declaration"
+#query = """
+#(
+#((field_declaration 
+#                declarator: (variable_declarator 
+#                                    name: (_) @variable_name
+#                                    value: [(true) (false)] @init)) @field_declaration)
+#)
+#"""
+#replace = ""
+#replace_node = "field_declaration"
+#is_seed_rule = false
+#
+## Check if there is no assignment where the variable @variable_name is 
+## assigned to a value other than @init, within the method body
+#[[rules.filters]]
+#enclosing_node = "(class_declaration) @cd"
+#not_contains = ["""(
+#((assignment_expression
+#                    left: (_) @a.lhs
+#                    right: (_) @a.rhs) @assignment)
+#(#eq? @a.lhs "@variable_name")
+#(#not-eq? @a.rhs "@init")
+#)"""]
 
 # This rule is part of inline variable declaration and field declaration cleanup. 
 # Delete assignment for a particular (@variable_name, @init) if: 

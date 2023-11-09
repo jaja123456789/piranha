@@ -20,12 +20,22 @@
 #
 [[rules]]
 name = "replace_isToggleEnabled_with_boolean_literal"
-query = """
-(
-    (for_statement) @for_stmt
+query = """((invocation_expression
+	function: (member_access_expression
+    	expression: [(identifier) @lib
+        			 (member_access_expression name: (identifier) @lib)]
+        name: (identifier) @name
+   	)
+    arguments: (argument_list
+    	.(argument (string_literal) @bool_arg)
+    )
+) @invocation_expression
+(#eq? @name "GetBoolean")
+(#eq? @lib "Registry")
+(#match? @bool_arg "\\\"JIRA45_Enabled\\\"")
 )
 """
-replace_node = "for_stmt"
-replace = ""
+replace_node = "invocation_expression"
+replace = "@treated"
 groups = ["replace_expression_with_boolean_literal"]
 holes = ["treated", "stale_flag_name"]

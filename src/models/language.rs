@@ -273,15 +273,23 @@ impl std::str::FromStr for PiranhaLanguage {
           .to_vec(),
         comment_nodes: vec![],
 	  }),
-	  C_SHARP => Ok(PiranhaLanguage {
-        extension: "cs".to_string(),
-        supported_language: SupportedLanguage::CSharp,
-        language: tree_sitter_c_sharp::language(),
-        rules: None,
-        edges: None,
-        scopes: vec![],
-        comment_nodes: vec![],
-      }),
+	  C_SHARP => {
+		let rules: Rules = parse_toml(include_str!("../cleanup_rules/csharp/rules.toml"));
+		let edges: Edges = parse_toml(include_str!("../cleanup_rules/csharp/edges.toml"));
+		Ok(PiranhaLanguage {
+			extension: "cs".to_string(),
+			supported_language: SupportedLanguage::CSharp,
+			language: tree_sitter_c_sharp::language(),
+			rules: Some(rules),
+			edges: Some(edges),
+			scopes: parse_toml::<ScopeConfig>(include_str!(
+			"../cleanup_rules/csharp/scope_config.toml"
+			))
+			.scopes()
+			.to_vec(),
+			comment_nodes: vec![],
+		})
+	  },
       _ => Err("Language not supported"),
     }
   }

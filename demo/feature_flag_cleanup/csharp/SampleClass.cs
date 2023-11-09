@@ -11,19 +11,25 @@ class Temp
 	public int TestMethod(int tmp)
 	{
 		
-		
-	
-		if(exp.isToggleEnabled(SAMPLE_STALE_FLAG))
+		if(Registry.GetBoolean("JIRA45_Enabled"))
 		{
+			something(1);
 			return 1000;
 		}
+		something();
+		something();
 		return 200;
+
 	}
 	
 	public int TestMethod1(int tmp)
 	{
-		if(!exp.isToggleEnabled(SAMPLE_STALE_FLAG))
+		
+		var t = list.Where(x=>x.Active || (Registry.GetBoolean("JIRA45_Enabled") && !x.Active)).Select(x=> Registry.GetBoolean("JIRA45_Enabled")?x.var1:x.var2);
+		
+		if(!Registry.GetBoolean("JIRA45_Enabled"))
 		{
+			something();
 			return 1000;
 		}
 		return 200;
