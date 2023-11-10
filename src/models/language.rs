@@ -95,7 +95,7 @@ impl PiranhaLanguage {
   pub(crate) fn can_parse(&self, path: &PathBuf) -> bool {
     path
       .extension()
-      .and_then(|e| e.to_str().filter(|x| x.eq(&self.extension())))
+      .and_then(|e| e.to_str().filter(|x| self.extension().split(",").map(|x| x.trim()).collect::<Vec<_>>().contains(x)))
       .is_some()
   }
 
@@ -277,7 +277,7 @@ impl std::str::FromStr for PiranhaLanguage {
 		let rules: Rules = parse_toml(include_str!("../cleanup_rules/csharp/rules.toml"));
 		let edges: Edges = parse_toml(include_str!("../cleanup_rules/csharp/edges.toml"));
 		Ok(PiranhaLanguage {
-			extension: "cs".to_string(),
+			extension: language.to_string(),
 			supported_language: SupportedLanguage::CSharp,
 			language: tree_sitter_c_sharp::language(),
 			rules: Some(rules),

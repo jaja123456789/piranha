@@ -41,7 +41,7 @@ query = """
 (
     (if_statement
         condition : ((boolean_literal) @bool) (#match? @bool "true")
-        consequence : ((block) @consequence))
+        consequence : ([(block)(expression_statement)] @consequence))
 @if_statement)
 """
 replace = "@consequence"

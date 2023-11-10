@@ -32,7 +32,7 @@ query = """((invocation_expression
 ) @invocation_expression
 (#eq? @name "GetBoolean")
 (#eq? @lib "Registry")
-(#match? @bool_arg "\\\"JIRA45_Enabled\\\"")
+(#match? @bool_arg "\\\"@stale_flag_name\\\"")
 )
 """
 replace_node = "invocation_expression"

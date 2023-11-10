@@ -32,7 +32,7 @@ pub const THRIFT: &str = "thrift";
 pub const STRINGS: &str = "strings";
 pub const TS_SCHEME: &str = "scm"; // We support scheme files that contain tree-sitter query
 pub const SCALA: &str = "scala";
-pub const C_SHARP: &str = "c_sharp";
+pub const C_SHARP: &str = "cs,cshtml";
 
 pub const REGEX_QUERY_PREFIX: &str = "rgx ";
 pub const CONCRETE_SYNTAX_QUERY_PREFIX: &str = "cs ";
