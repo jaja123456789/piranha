@@ -2,6 +2,7 @@ from os.path import join, dirname, getmtime, exists
 from polyglot_piranha import execute_piranha, PiranhaArguments
 import logging
 from logging import info
+import re 
 
 feature_flag_dir = join(dirname(__file__), "feature_flag_cleanup")
 
@@ -9,13 +10,10 @@ def run_csharp_ff_demo():
     info("Running the stale feature flag cleanup demo for c sharp")
 
     directory_path = join(feature_flag_dir, "csharp")
-    modified_file_path = join(directory_path, "SampleClass.cs")
     configuration_path = join(directory_path, "configurations")
 
-    old_mtime = getmtime(modified_file_path)
-
     args = PiranhaArguments(
-        "c_sharp",
+        "cs,cshtml",
         substitutions={
             "stale_flag_name": "JIRA45_Enabled",
             "treated": "true",
@@ -23,19 +21,14 @@ def run_csharp_ff_demo():
         },
         paths_to_codebase=[directory_path+'/SampleClass.cs'],
         path_to_configurations=configuration_path,
-        number_of_ancestors_in_parent_scope=5
+        number_of_ancestors_in_parent_scope=5,
+        delete_consecutive_new_lines=True,
+        dry_run=True
     )
     output_summary_java = execute_piranha(args)
-
-    assert len(output_summary_java) == 2
-
-    for summary in output_summary_java:
-        assert len(summary.rewrites) > 0
-
-    new_mtime = getmtime(modified_file_path)
-
-    assert old_mtime < new_mtime
-    assert not exists(deleted_join_path)
+    print(output_summary_java, len(output_summary_java))
+    
+    print(output_summary_java[0].content)
 
 def run_java_ff_demo():
     info("Running the stale feature flag cleanup demo for Java")

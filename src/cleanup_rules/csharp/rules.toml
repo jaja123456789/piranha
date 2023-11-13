@@ -41,7 +41,8 @@ query = """
 (
     (if_statement
         condition : ((boolean_literal) @bool) (#match? @bool "true")
-        consequence : ([(block)(expression_statement)] @consequence))
+        consequence : ([((block) @consequence)((expression_statement) @consequence)])
+	)
 @if_statement)
 """
 replace = "@consequence"
@@ -64,9 +65,11 @@ query = """
 (
     (if_statement
         condition : ((boolean_literal) @bool) (#match? @bool "false")
-        consequence : ((block) @consequence)
-        alternative : ((_) @alternative) ?)
-@if_statement)"""
+        consequence : ([((block) @consequence)((expression_statement) @consequence)])
+        alternative : ([((block) @alternative)((expression_statement) @alternative)]?)
+	)
+@if_statement)
+"""
 replace = "@alternative"
 replace_node = "if_statement"
 is_seed_rule = false
@@ -131,7 +134,7 @@ query = """
     (block
         (
             (_)* @pre
-            (block (_)* @nested.statements) @nested.block
+            (block ((_)* @nested.statements)) @nested.block
             (_)* @post
         )
     )
@@ -552,12 +555,12 @@ is_seed_rule = false
 [[rules]]
 name = "delete_variable_declaration"
 query = """
-(local_declaration_statement (variable_declaration
+((local_declaration_statement (variable_declaration
 	(variable_declarator
     	(identifier) @variable_name
         (equals_value_clause (boolean_literal) @init)
     ) 
-) @variable_declaration)
+)) @variable_declaration)
 """
 replace = ""
 replace_node = "variable_declaration"
@@ -630,10 +633,10 @@ holes = ["variable_name", "init"]
 [[rules.filters]]
 enclosing_node = "[(method_declaration) (constructor_declaration)] @md"
 not_contains = ["""(
-((local_variable_declaration 
-                declarator: (variable_declarator 
-                                    name: (_) @vdcl.lhs
-                                    value: (_) @vdcl.init)) @field_declaration)
+((local_declaration_statement
+                 (variable_declaration (variable_declarator 
+                                    (identifier) @vdcl.lhs
+                                    value: (_)? @vdcl.init)) @field_declaration))
 (#eq? @vdcl.lhs "@l")
 )"""]
 
@@ -658,13 +661,15 @@ is_seed_rule = false
 [[rules.filters]]
 enclosing_node = "(method_declaration) @md"
 not_contains = [
-  """(
-((local_variable_declaration
-                declarator: (variable_declarator 
-                                    name: (_) @vdcl.lhs
+  """
+	(
+((local_declaration_statement
+                 (variable_declaration (variable_declarator 
+                                    (identifier) @vdcl.lhs
                                     value: (_)? @vdcl.init)) @variable_declaration)
-(#eq? @vdcl.lhs "@variable_name")
-)""",
+)(#eq? @vdcl.lhs "@variable_name")
+)
+  """,
 ]
 [[rules.filters]]
 # There should exist no field declaration named `@variable_name` and
@@ -704,10 +709,10 @@ is_seed_rule = false
 # There should exist no local variable declaration named `@identifer`
 enclosing_node = "[(method_declaration) (constructor_declaration)] @md"
 not_contains = ["""(
-((local_variable_declaration 
-                declarator: (variable_declarator 
-                                    name: (_) @vdcl.lhs
-                                    value: (_) @vdcl.init)) @field_declaration)
+((local_declaration_statement
+                 (variable_declaration (variable_declarator 
+                                    (identifier) @vdcl.lhs
+                                    value: (_)? @vdcl.init)) @field_declaration))
 (#eq? @vdcl.lhs "@identifier")
 )"""]
 

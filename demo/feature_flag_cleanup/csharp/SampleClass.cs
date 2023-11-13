@@ -4,7 +4,9 @@ class Temp
 
     public int StudentId
     {
-        get { return id; }
+        get {
+			return Registry.GetBoolean("JIRA45_Enabled") ? id: id1;
+		}
         set { id = value; }
     }
 	
@@ -14,6 +16,12 @@ class Temp
 		if(Registry.GetBoolean("JIRA45_Enabled"))
 		{
 			something(1);
+			something(2);
+			if(something())
+			{
+				somethingelse();
+			}
+			testing();
 			return 1000;
 		}
 		something();
@@ -22,16 +30,26 @@ class Temp
 
 	}
 	
+	public int TestMethod2(int tmp)
+	{
+		
+		var flag = Registry.GetBoolean("JIRA45_Enabled");
+		flag = flag |= 1;
+		if(flag){
+			yay();
+		}
+		something();
+
+	}
+	
 	public int TestMethod1(int tmp)
 	{
 		
 		var t = list.Where(x=>x.Active || (Registry.GetBoolean("JIRA45_Enabled") && !x.Active)).Select(x=> Registry.GetBoolean("JIRA45_Enabled")?x.var1:x.var2);
 		
-		if(!Registry.GetBoolean("JIRA45_Enabled"))
-		{
+		if(Registry.GetBoolean("JIRA45_Enabled"))
 			something();
-			return 1000;
-		}
+
 		return 200;
 	}
 }

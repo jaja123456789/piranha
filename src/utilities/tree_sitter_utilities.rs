@@ -23,7 +23,7 @@ use crate::{
 };
 use itertools::Itertools;
 use log::debug;
-
+use std::str;
 use std::collections::HashMap;
 use tree_sitter::{InputEdit, Node, Parser, Query, QueryCapture, QueryCursor};
 use tree_sitter_traversal::{traverse, Order};
@@ -131,6 +131,7 @@ fn accumulate_repeated_tags(
   query: &Query, query_matches: Vec<Vec<tree_sitter::QueryCapture>>, source_code: &str,
 ) -> HashMap<String, String> {
   let mut code_snippet_by_tag: HashMap<String, String> = HashMap::new();
+  let mut tag_start_indent: HashMap<String, String> = HashMap::new();
   let tag_names_by_index: HashMap<usize, &String> =
     query.capture_names().iter().enumerate().collect();
   // Iterate over each tag name in the query
@@ -140,11 +141,41 @@ fn accumulate_repeated_tags(
       // Iterate over each capture
       for capture in captures {
         if tag_names_by_index[&(capture.index as usize)].eq(tag_name) {
+		  let prefix = match &capture.node.parent(){
+		    Some(val) => {
+				let start_prefix = str::from_utf8(&source_code.as_bytes()[(val.start_byte()-val.start_position().column)..val.start_byte()]).unwrap();
+				start_prefix
+			},
+			_ => ""
+		  };
+		  
+		  let cur_prefix = str::from_utf8(&source_code.as_bytes()[(capture.node.start_byte()-capture.node.start_position().column)..capture.node.start_byte()]).unwrap();
+		  let mut prefix_diff = String::from("");
+		  for (i,c) in cur_prefix.chars().enumerate(){
+			  if i >= prefix.chars().count(){
+				  prefix_diff.push_str(c.to_string().as_str());
+				  continue;
+			  }
+			  if c == cur_prefix.chars().nth(i).unwrap(){
+				  continue;
+			  }
+			  prefix_diff.push_str(c.to_string().as_str());
+		  }
+		  
           let code_snippet = &capture.node.utf8_text(source_code.as_bytes()).unwrap();
           code_snippet_by_tag
             .entry(tag_name.clone())
-            .and_modify(|x| x.push_str(format!("\n{code_snippet}").as_str()))
-            .or_insert_with(|| code_snippet.to_string());
+            .and_modify(|x| {
+				let mut snips: Vec<&str> = code_snippet.split("\n").collect();
+				snips = snips.into_iter().map(|x| x.strip_prefix(prefix_diff.as_str()).unwrap_or(x)).collect();
+				let mod_code_snippet = snips.connect(format!("\n").as_str());
+				debug!("a {:?} {:?} {:?} {:?}", tag_name, prefix_diff, code_snippet, mod_code_snippet);
+				x.push_str(format!("\n{prefix}{mod_code_snippet}").as_str())
+			})
+            .or_insert_with(|| {
+				tag_start_indent.entry(tag_name.clone()).or_insert(prefix.to_string());
+				code_snippet.to_string()
+			});
         }
       }
     }
